@@ -129,7 +129,7 @@ def filter_and_group_edits(active_editors_test, processed_edits):
             try:
                 edit_number, edit = edits_enumerator.next()
                 # Progress report
-                if edit_number % 1000 == 0: print "Processing edit %s" % locale.format('%d', edit_number, grouping=True)
+                if edit_number % 10000 == 0: print "Processing edit %s" % locale.format('%d', edit_number, grouping=True)
             except StopIteration:
                 done = True
 
@@ -176,7 +176,7 @@ def featurize_single_editor(edits, deadline_month):
     return vector
 
 def featurize_all_editors(editors, grouped_edits, deadline_month):
-    """Generate the 21 features for all edit
+    """Generate the 21 features for all editors
     """
     return [featurize_single_editor(grouped_edits[editor], deadline_month) for editor in editors]
 
@@ -315,7 +315,7 @@ if __name__ == "__main__":
 
     print "Fitting model"
     model = learn(featurized_data_train, targets_train)
-    print "Done fiting model"
+    print "Done fitting model"
 
     #
     # 4. Generate featurized data and targets for testing
