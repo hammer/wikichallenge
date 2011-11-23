@@ -215,6 +215,7 @@ def learn(featurized_data_train, targets_train, model_type='gbt'):
     """Fit the model
     """
     model = MODEL_TYPES[model_type]
+    # model.fit(featurized_data_train, targets_train) for sklearn
     # 'subsample_portion':0.8, 'shrinkage':0.01
     model.train(featurized_data_train,
                 cv2.CV_ROW_SAMPLE,
@@ -233,6 +234,7 @@ def drift(active_editors_test, grouped_edits, time_train, time_test):
 
 # TODO: parameterize estimation
 def estimate(model, featurized_data_test, drift):
+    # model.predict(featurized_data_test) for sklearn
     forecasts = [model.predict(sample) for sample in featurized_data_test]
     return [max(y + drift, 0) for y in forecasts]
 
@@ -241,6 +243,15 @@ def rmsle(targets_test_predicted, targets_test):
     sle = sum([math.pow(targets_test_predicted[i] - targets_test[i], 2) for i in range(n)])
     return math.sqrt(sle/n)
 
+#
+# Output formatting
+#
+
+def format_for_vw(featurized_data, targets):
+    """Return a string in Vowpal Wabbit's format
+    """
+    return '\n'.join(['%s |features %s' % (label, ' '.join(['%s:%s' % (i, v) for i, v in enumerate(features)]))
+                      for label, features in izip(targets, featurized_data)])
 
 #
 # Main
@@ -278,10 +289,13 @@ if __name__ == "__main__":
 
     print "Filtering and grouping edits"
     grouped_edits = filter_and_group_edits(active_editors_test, processed_edits)
+    print "Done filtering and grouping edits"
+
+    print "Pickling grouped edits"
     pkl_file = open('data/%s_grouped_edits.pkl' % dataset, 'wb')
     pickle.dump(grouped_edits, pkl_file, -1)
     pkl_file.close()
-    print "Done filtering and grouping edits"
+    print "Done pickling grouped edits"
 
     #
     # 2. Generate featurized data and targets for training
@@ -334,6 +348,7 @@ if __name__ == "__main__":
         edits_count = load_validation_targets_test(active_editors_test)
         targets_test = np.array([math.log1p(edits_count[editor]) for editor in active_editors_test], dtype=np.float32)
         print "Done loading known validation test targets"
+
     else:
         targets_test = np.array(targetize_all_editors(active_editors_test, grouped_edits, time_test + 5), dtype=np.float32)
     pkl_file = open('data/%s_targets_test.pkl' % dataset, 'wb')
